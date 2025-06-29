@@ -1,0 +1,15 @@
+/* Scrollbar personnalisée */
+body {
+  scrollbar-width: thin;
+  scrollbar-color: #1e40af #f1f5f9;
+}
+body::-webkit-scrollbar {
+  width: 8px;
+  background: #f1f5f9;
+}
+body::-webkit-scrollbar-thumb {
+  background: #1e40af;
+  border-radius: 4px;
+}
+
+/* Ajoute ici d'autres styles personnalisés si besoin */
