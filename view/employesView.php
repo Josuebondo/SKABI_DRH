@@ -27,10 +27,11 @@ if (isset($_GET['submit'])) {
 } else {
     $employes = $employemodel->getAllEmployes();
 }
-if (isset($_GET['delete'])) {
-    $id = $_GET['delete'];
+if (isset($_POST['delete_id'])) {
+    $id = $_POST['delete_id'];
     $employemodel->deleteEmploye($id);
     header("Location: employesView.php");
+    exit();
 }
 
 $error = null;
@@ -77,39 +78,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - Présences & Paiements</title>
+    <title>Employés - Gestion RH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay { display: none; }
+        @media (max-width: 768px) {
+            .sidebar-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 40; }
+            .sidebar-responsive { position: fixed; left: 0; top: 0; height: 100vh; z-index: 50; transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar-open { transform: translateX(0); }
+        }
+    </style>
 </head>
-
 <body class="bg-gray-100">
-
     <!-- Navbar -->
-    <header class="bg-blue-800 text-white p-4 shadow">
-        <h1 class="text-xl font-bold">Société Kabipangi-Fils</h1>
-        <p class="text-sm">Gestion du personnel</p>
+    <header class="bg-blue-800 text-white p-4 shadow flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <img src="../public/images/logo.png" alt="Logo Société" class="h-10 w-auto rounded bg-white p-1 shadow" style="max-width:48px;">
+            <div>
+                <h1 class="text-xl font-bold">Société Kabipangi-Fils</h1>
+                <p class="text-sm">Gestion du personnel</p>
+            </div>
+        </div>
+        <!-- Burger button for mobile -->
+        <button id="burgerBtn" class="md:hidden text-white text-3xl focus:outline-none">
+            <i class="fas fa-bars"></i>
+        </button>
     </header>
 
-    <!-- Layout principal -->
+    <!-- Sidebar overlay (mobile) -->
+    <div id="sidebarOverlay" class="sidebar-overlay hidden"></div>
+
     <div class="flex flex-col md:flex-row min-h-screen">
         <!-- Sidebar -->
-        <aside class="bg-white w-full md:w-64 border-r shadow-md">
+        <aside id="sidebar" class="sidebar-responsive bg-white w-64 border-r shadow-md h-full md:static md:translate-x-0 md:h-auto md:block">
             <nav class="p-4 space-y-4">
-                <a href="dashboard.php" class=" text-gray-700 hover:bg-blue-50 rounded px-2 py-1 transition">Dashboard</a>
-                <a href="employesView.php" class=" block text-blue-800 font-semibold hover:bg-blue-50 rounded px-2 py-1 transition">Employés</a>
-                <a href="presenceView.php" class="block text-gray-700 hover:bg-blue-50 rounded px-2 py-1 transition">Présences</a>
-                <a href="#" class="block text-gray-700 hover:bg-blue-50 rounded px-2 py-1 transition">Paiements</a>
-                <a href="#" class="block text-gray-700 hover:bg-blue-50 rounded px-2 py-1 transition">Rapports</a>
+                <a href="dashboard.php" class="block px-2 py-1 rounded transition nav-link" data-link="dashboard.php">Dashboard</a>
+                <a href="employesView.php" class="block px-2 py-1 rounded transition nav-link" data-link="employesView.php">Employés</a>
+                <a href="presenceView.php" class="block px-2 py-1 rounded transition nav-link" data-link="presenceView.php">Présences</a>
+                <a href="payementView.php" class="block px-2 py-1 rounded transition nav-link" data-link="payementView.php">Paiements</a>
+                <a href="../rapport.php" class="block px-2 py-1 rounded transition nav-link" data-link="rapport.php">Rapports</a>
             </nav>
         </aside>
-
-        <!-- Contenu principal -->
-        <main class="flex-1 p-6">
+        <!-- Main content -->
+        <main class="flex-1 p-6 md:ml-0 w-full">
             <h2 class="text-2xl font-bold mb-4">Touts employés</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-xl p-4 shadow hover:scale-105 transition">
@@ -271,11 +288,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
                                         >
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 deleteBtn"
-                                            data-id="<?php echo $employe['id']; ?>"
-                                        >
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <form method="POST" action="" style="display:inline;" onsubmit="return confirm('Voulez-vous vraiment supprimer cet employé ?');">
+                                            <input type="hidden" name="delete_id" value="<?php echo $employe['id']; ?>">
+                                            <button type="submit" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -286,46 +304,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
         </main>
     </div>
-
     <script>
-// Ouvre le modal d'ajout
-document.getElementById('openModalBtn').onclick = function() {
-    document.getElementById('addEmployeModal').classList.remove('hidden');
-};
-// Ferme le modal d'ajout
-document.getElementById('closeModalBtn').onclick = function() {
-    document.getElementById('addEmployeModal').classList.add('hidden');
-};
-// Fermer en cliquant sur le fond noir (ajout)
-document.getElementById('addEmployeModal').onclick = function(e) {
-    if (e.target === this) {
-        this.classList.add('hidden');
-    }
-};
+    // Sidebar responsive logic (factorisable)
+    (function() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const burgerBtn = document.getElementById('burgerBtn');
+    // Ouvre la sidebar sur mobile
+    burgerBtn && burgerBtn.addEventListener('click', function() {
+        sidebar.classList.add('sidebar-open');
+        overlay.classList.remove('hidden');
+    });
+    // Ferme la sidebar en cliquant sur l'overlay
+    overlay && overlay.addEventListener('click', function() {
+        sidebar.classList.remove('sidebar-open');
+        overlay.classList.add('hidden');
+    });
+    // Ferme la sidebar si on resize en desktop
+    window.addEventListener('resize', function() {
+        if(window.innerWidth >= 768) {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.add('hidden');
+        }
+    });
+    // Lien actif dynamique
+    const links = document.querySelectorAll('.nav-link');
+    const current = window.location.pathname.split('/').pop();
+    links.forEach(link => {
+        if(link.getAttribute('data-link') === current) {
+            link.classList.add('bg-blue-100', 'text-blue-800', 'font-semibold');
+        } else {
+            link.classList.remove('bg-blue-100', 'text-blue-800', 'font-semibold');
+        }
+    });
+})();
 
-// Ouvre le modal de modification et pré-remplit les champs
-document.querySelectorAll('.editBtn').forEach(function(btn) {
-    btn.onclick = function() {
-        document.getElementById('update_id').value = this.dataset.id;
-        document.getElementById('update_nom_complet').value = this.dataset.nom;
-        document.getElementById('update_email').value = this.dataset.email;
-        document.getElementById('update_telephone').value = this.dataset.telephone;
-        document.getElementById('update_poste').value = this.dataset.poste;
-        document.getElementById('update_salaire').value = this.dataset.salaire;
-        document.getElementById('updateEmployeModal').classList.remove('hidden');
-    }
-});
-// Ferme le modal de modification
-document.getElementById('closeUpdateModalBtn').onclick = function() {
-    document.getElementById('updateEmployeModal').classList.add('hidden');
-};
-// Fermer en cliquant sur le fond noir (modif)
-document.getElementById('updateEmployeModal').onclick = function(e) {
-    if (e.target === this) {
-        this.classList.add('hidden');
-    }
-};
-</script>
+    // Ouvre le modal d'ajout
+    document.getElementById('openModalBtn').onclick = function() {
+        document.getElementById('addEmployeModal').classList.remove('hidden');
+    };
+    // Ferme le modal d'ajout
+    document.getElementById('closeModalBtn').onclick = function() {
+        document.getElementById('addEmployeModal').classList.add('hidden');
+    };
+    // Fermer en cliquant sur le fond noir (ajout)
+    document.getElementById('addEmployeModal').onclick = function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    };
+
+    // Ouvre le modal de modification et pré-remplit les champs
+    document.querySelectorAll('.editBtn').forEach(function(btn) {
+        btn.onclick = function() {
+            document.getElementById('update_id').value = this.dataset.id;
+            document.getElementById('update_nom_complet').value = this.dataset.nom;
+            document.getElementById('update_email').value = this.dataset.email;
+            document.getElementById('update_telephone').value = this.dataset.telephone;
+            document.getElementById('update_poste').value = this.dataset.poste;
+            document.getElementById('update_salaire').value = this.dataset.salaire;
+            document.getElementById('updateEmployeModal').classList.remove('hidden');
+        }
+    });
+    // Ferme le modal de modification
+    document.getElementById('closeUpdateModalBtn').onclick = function() {
+        document.getElementById('updateEmployeModal').classList.add('hidden');
+    };
+    // Fermer en cliquant sur le fond noir (modif)
+    document.getElementById('updateEmployeModal').onclick = function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    };
+    </script>
 </body>
-
 </html>

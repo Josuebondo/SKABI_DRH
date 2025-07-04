@@ -18,6 +18,22 @@ class employesModel
         $stmt = $this->pdo->query("SELECT * FROM employees ORDER BY id DESC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function getEmployesCount()
+    {
+        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM employees");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count']; // Returns the total number of employees
+    }
+        
+    public function getEmployesByPage($page, $limit = 10)
+    {
+        $offset = ($page - 1) * $limit;
+        $stmt = $this->pdo->prepare("SELECT * FROM employees ORDER BY id DESC LIMIT ? OFFSET ?");
+        $stmt->execute([$limit, $offset]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
     public function searchEmployes($search)
     {
         $stmt = $this->pdo->prepare("SELECT * FROM employees WHERE nom_complet LIKE ? OR telephone LIKE ? or email LIKE ? or id LIKE ?");
@@ -25,12 +41,18 @@ class employesModel
         $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+
+
     public function deleteEmploye($id)
     {
         $stmt = $this->pdo->prepare("DELETE FROM employees WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0; // Returns true if a row was deleted
     }
+
+
+
     public function addEmploye($nom_complet, $email, $telephone, $poste, $salaire)
     {
         // Validate inputs

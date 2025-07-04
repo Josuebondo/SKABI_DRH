@@ -3,10 +3,10 @@ require_once '../config/config.php';
 require_once '../model/employes.php';
 require_once '../model/presences.php';
 
-$employemodel= $this employesModel;
+$employemodel= $this->employeModel;
 
-$employes = getAllEmployes($pdo);
-$presences = getTodayPresences($pdo);
+$employes = $employemodel->getAllEmployes($pdo);
+$presences = $employemodel->getTodayPresences($pdo);
 ?>
 
 <!DOCTYPE html>
